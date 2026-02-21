@@ -1,49 +1,67 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+
+    <!-- Mobile Friendly 🔥 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>GitHub Activity Feed</title>
 
+    <!-- CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
-<body>
 
-<!-- ✅ Navbar -->
-<nav class="nav">
+<!-- Default theme -->
+<body class="dark">
 
-    <!-- LEFT -->
-    <div class="nav-left">
-        🚀 GitHub Activity Feed
-    </div>
+    <!-- ✅ Navbar -->
+    <nav class="nav">
 
-    <!-- RIGHT -->
-    <div class="nav-right">
+        <div class="nav-left">
+            🚀 GitHub Activity Feed
+        </div>
 
-        <!-- Toggle -->
-        <label class="switch">
-            <input type="checkbox" id="themeToggle">
-            <span class="slider"></span>
-        </label>
+        <div class="nav-right">
 
-        <!-- GitHub -->
-        <a href="https://github.com/ashmeet07/webhook-repo" target="_blank" class="github-btn">
-            🌟 GitHub
-        </a>
+            <!-- Theme Toggle -->
+            <label class="switch">
+                <input type="checkbox" id="themeToggle">
+                <span class="slider"></span>
+            </label>
 
-    </div>
+            <!-- GitHub Repo -->
+            <a href="https://github.com/ashmeet07/webhook-repo"
+               target="_blank"
+               class="github-btn">
+                🌟 GitHub
+            </a>
 
-</nav>
+        </div>
+    </nav>
 
-<!-- ✅ Main Content -->
-<div class="container">
-    <div id="feed"></div>
+    <!-- ✅ Main Container -->
+    <main class="container">
 
-    <div class="controls">
-        <button onclick="prevPage()">⬅ Prev</button>
-        <button onclick="nextPage()">Next ➡</button>
-    </div>
-</div>
+        <!-- Optional Header (clean & minimal) -->
+        <header class="page-header">
+            <h1>Activity Stream</h1>
+            <p>Live updates from your GitHub events</p>
+        </header>
 
-<script src="{{ url_for('static', filename='script.js') }}"></script>
+        <!-- Feed -->
+        <section id="feed"></section>
+
+        <!-- Controls -->
+        <div class="controls">
+            <button onclick="prevPage()">⬅ Prev</button>
+            <button onclick="nextPage()">Next ➡</button>
+        </div>
+
+    </main>
+
+    <!-- JS -->
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
 
 </body>
 </html>
