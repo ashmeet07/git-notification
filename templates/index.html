@@ -2,66 +2,98 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-
-    <!-- Mobile Friendly 🔥 -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <title>GitHub Activity Feed</title>
-
-    <!-- CSS -->
+    <title>GitHub Activity | Monitor</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
-
-<!-- Default theme -->
-<body class="dark">
-
-    <!-- ✅ Navbar -->
-    <nav class="nav">
-
-        <div class="nav-left">
-            🚀 GitHub Activity Feed
-        </div>
-
-        <div class="nav-right">
-
-            <!-- Theme Toggle -->
-            <label class="switch">
-                <input type="checkbox" id="themeToggle">
-                <span class="slider"></span>
-            </label>
-
-            <!-- GitHub Repo -->
-            <a href="https://github.com/ashmeet07/webhook-repo"
-               target="_blank"
-               class="github-btn">
-                🌟 GitHub
-            </a>
-
+<body class="dark-theme">
+    <nav class="app-nav">
+        <div class="nav-wrapper container">
+            <div class="brand">
+                <div class="status-indicator">
+                    <span class="pulse"></span>
+                </div>
+                <span class="brand-text">GitHub <span class="accent-text">Activity</span></span>
+            </div>
+            <div class="nav-controls">
+                <div class="theme-switch-container">
+                    <i class="bi bi-sun-fill"></i>
+                    <label class="switch">
+                        <input type="checkbox" id="themeToggle" checked>
+                        <span class="slider round"></span>
+                    </label>
+                    <i class="bi bi-moon-stars-fill"></i>
+                </div>
+                <a href="https://github.com/TechQuanta/webhook-repo" target="_blank" class="btn btn-github">
+                    <i class="bi bi-github"></i> <span>View Code</span>
+                </a>
+            </div>
         </div>
     </nav>
 
-    <!-- ✅ Main Container -->
-    <main class="container">
+    <main class="container page-layout">
+        <aside class="sidebar-left">
+            <div class="profile-card glass">
+                <div class="avatar-placeholder"><i class="bi bi-git"></i></div>
+                <h3 class="font-weight-bold">Event Monitor</h3>
+                <p class="text-secondary mb-4">Webhook Listener v1.0</p>
+                
+                <div class="webhook-section">
+                    <label class="small text-muted text-uppercase font-weight-bold">Webhook URL</label>
+                    <div class="webhook-box">
+                        <code id="webhookUrl">http://git-notification.onrender.com/webhook</code>
+                        <button class="copy-btn" onclick="copyUrl()" title="Copy to Clipboard">
+                            <i class="bi bi-clipboard"></i>
+                        </button>
+                    </div>
+                    <p class="small text-muted mt-2" style="font-size: 0.7rem;">
+                        Add this URL to your GitHub Repository Webhooks settings.
+                    </p>
+                </div>
 
-        <!-- Optional Header (clean & minimal) -->
-        <header class="page-header">
-            <h1>Activity Stream</h1>
-            <p>Live updates from your GitHub events</p>
-        </header>
+                <div class="stats">
+                    <div class="stat-item">
+                        <span class="text-success small"><i class="bi bi-record-fill"></i> Listening</span>
+                        <span>Service Status</span>
+                    </div>
+                </div>
+            </div>
+        </aside>
 
-        <!-- Feed -->
-        <section id="feed"></section>
+        <section class="main-content">
+            <header class="content-header">
+                <div>
+                    <h1>Activity Stream</h1>
+                    <p class="text-secondary">Recent repository events and payloads</p>
+                </div>
+            </header>
 
-        <!-- Controls -->
-        <div class="controls">
-            <button onclick="prevPage()">⬅ Prev</button>
-            <button onclick="nextPage()">Next ➡</button>
-        </div>
+            <div id="feed" class="activity-timeline">
+                </div>
 
+            <footer class="pagination-footer">
+                <button class="nav-btn" onclick="prevPage()">
+                    <i class="bi bi-arrow-left"></i>
+                </button>
+                <span class="page-number">Page 01</span>
+                <button class="nav-btn active" onclick="nextPage()">
+                    <i class="bi bi-arrow-right"></i>
+                </button>
+            </footer>
+        </section>
     </main>
 
-    <!-- JS -->
+    <script>
+        function copyUrl() {
+            const url = document.getElementById('webhookUrl').innerText;
+            navigator.clipboard.writeText(url);
+            const btn = document.querySelector('.copy-btn i');
+            btn.className = 'bi bi-check-lg text-success';
+            setTimeout(() => { btn.className = 'bi bi-clipboard'; }, 2000);
+        }
+    </script>
     <script src="{{ url_for('static', filename='script.js') }}"></script>
-
 </body>
 </html>

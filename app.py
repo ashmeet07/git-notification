@@ -5,103 +5,100 @@ import os
 
 app = Flask(__name__)
 
-client = MongoClient(os.environ.get("MONGO_STRING"))
-
+# --- DATABASE SETUP ---
+# Securely get the connection string from environment variables
+MONGO_URI = os.environ.get("MONGO_STRING", "mongodb://localhost:27017/")
+client = MongoClient(MONGO_URI)
 db = client["github"]
 collection = db["event"]
-
 
 @app.route("/")
 def home():
     return render_template("index.html")
 
-
 @app.route("/webhook", methods=["POST"])
 def webhook():
-
     payload = request.json
     event_type = request.headers.get("X-GitHub-Event")
 
-    data = {}
+    if not payload:
+        return jsonify({"error": "No payload received"}), 400
 
+    # Base data structure
+    data = {
+        "timestamp": datetime.utcnow(),
+        "from_branch": None
+    }
+
+    # Logic for PUSH events
     if event_type == "push":
+        data.update({
+            "request_id": payload.get("after"),
+            "author": payload.get("pusher", {}).get("name"),
+            "action": "PUSH",
+            "to_branch": payload.get("ref", "").split("/")[-1]
+        })
 
-        data["request_id"] = payload["after"]
-        data["author"] = payload["pusher"]["name"]
-        data["action"] = "PUSH"
-        data["from_branch"] = None
-        data["to_branch"] = payload["ref"].split("/")[-1]
-        data["timestamp"] = datetime.utcnow()
-
+    # Logic for PULL REQUEST and MERGE events
     elif event_type == "pull_request":
+        pr = payload.get("pull_request", {})
+        data.update({
+            "request_id": str(pr.get("id")),
+            "author": pr.get("user", {}).get("login"),
+            "action": "PULL_REQUEST",
+            "from_branch": pr.get("head", {}).get("ref"),
+            "to_branch": pr.get("base", {}).get("ref")
+        })
 
-        pr = payload["pull_request"]
-
-        data["request_id"] = str(pr["id"])
-        data["author"] = pr["user"]["login"]
-        data["action"] = "PULL_REQUEST"
-        data["from_branch"] = pr["head"]["ref"]
-        data["to_branch"] = pr["base"]["ref"]
-        data["timestamp"] = datetime.utcnow()
-
-        if payload["action"] == "closed" and pr["merged"]:
+        # Override action if the PR was closed and merged
+        if payload.get("action") == "closed" and pr.get("merged"):
             data["action"] = "MERGE"
 
     else:
-        return jsonify({"msg": "ignored"}), 200
+        # Silently ignore other event types (e.g., ping, issues)
+        return jsonify({"msg": f"Event type {event_type} ignored"}), 200
 
+    # Store in MongoDB
     collection.insert_one(data)
-
     return jsonify({"msg": "stored"}), 200
 
-
-@app.route("/event", methods=["POST"])
-def store_event():
-
-    payload = request.json
-
-    required_fields = ["request_id", "author", "action", "to_branch"]
-
-    for field in required_fields:
-        if field not in payload:
-            return jsonify({"error": f"{field} missing"}), 400
-
-    data = {
-        "request_id": payload["request_id"],
-        "author": payload["author"],
-        "action": payload["action"],
-        "from_branch": payload.get("from_branch"),
-        "to_branch": payload["to_branch"],
-        "timestamp": datetime.utcnow()
-    }
-
-    collection.insert_one(data)
-
-    return jsonify({"msg": "event stored"}), 200
-
-
 @app.route("/events", methods=["GET"])
-def events():
+def get_events():
+    try:
+        # Pagination Parameters
+        page = int(request.args.get("page", 1))
+        limit = 6  
+        skip = (page - 1) * limit
 
-    page = int(request.args.get("page", 1))
-    limit = 10
-    skip = (page - 1) * limit
+        # 1. Get the real total count from MongoDB
+        total_records = collection.count_documents({})
+        
+        # 2. Fetch the records for the current page
+        results = list(
+            collection.find()
+            .sort("timestamp", -1)
+            .skip(skip)
+            .limit(limit)
+        )
 
-    results = list(
-        collection.find()
-        .sort("timestamp", -1)
-        .skip(skip)
-        .limit(limit)
-    )
+        # Format the data for JSON response
+        for r in results:
+            r["_id"] = str(r["_id"])
+            # Professional date format: "22 Feb 2026 • 12:45 AM"
+            r["timestamp"] = r["timestamp"].strftime("%d %b %Y • %I:%M %p")
 
-    for r in results:
-        r["_id"] = str(r["_id"])
-        r["timestamp"] = r["timestamp"].strftime("%d %b %Y • %I:%M %p UTC")
+        # 3. Return structured response with metadata
+        return jsonify({
+            "events": results,
+            "total_count": total_records,
+            "current_page": page,
+            "has_next": (skip + limit) < total_records
+        })
 
-    return jsonify(results)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
-
-# ✅ CRITICAL FOR RENDER 🚀
+# Entry point for Render/Local
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
